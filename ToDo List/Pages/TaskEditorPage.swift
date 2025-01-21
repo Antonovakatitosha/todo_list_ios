@@ -9,13 +9,13 @@ import SwiftUI
 
 struct TaskEditorPage: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.managedObjectContext) var moc
 
     @State private var title: String
     @State private var note: String
     @State private var createdAt: Date
 
-    let task: TaskDBModel?
+    let task: TaskUIModel?
+    var onEdit: () -> Void
 
     @State private var showErrorAlert = false
     @State private var errorDetail = ""
@@ -45,26 +45,7 @@ struct TaskEditorPage: View {
             .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        guard !title.isEmpty else {
-                            showErrorAlert = true
-                            errorDetail = "Невозможно сохранить задачу без названия"
-                            return
-                        }
-
-                        do {
-                            if let task = task {
-                               _ = try task.updateTask(in: moc, title: title, note: note)
-
-                            } else {
-                                _ = try TaskDBModel.createTask(in: moc, title: title, note: note)
-                            }
-                            dismiss()
-                        } catch {
-                            showErrorAlert = true
-                            errorDetail = error.localizedDescription
-                        }
-                    }) {
+                    Button(action: saveOrCreate) {
                         HStack {
                             Image(systemName: "chevron.backward")
                             Text("Назад")
@@ -74,26 +55,60 @@ struct TaskEditorPage: View {
                 }
             }
         }
-        .alert("Ошибка сохранения",
-               isPresented: $showErrorAlert,
-               actions: {
+        .alert("Ошибка сохранения", isPresented: $showErrorAlert, actions: {
             Button("OK", role: .cancel) {
                 dismiss()
             }
         }, message: { Text(errorDetail)})
     }
 
-    init(task: TaskDBModel?) {
+    init(task: TaskUIModel?, onEdit:  @escaping () -> Void) {
         self.task = task
+        self.onEdit = onEdit
         _title = State(initialValue: task?.title ?? "")
         _note = State(initialValue: task?.note ?? "")
         _createdAt = State(initialValue: task?.createdAt ?? Date())
     }
 
+    private func saveOrCreate() {
+        guard !title.isEmpty else {
+            showErrorAlert = true
+            errorDetail = "Невозможно сохранить задачу без названия"
+            return
+        }
+
+        DataManager.shared.performBackgroundTask { backgroundContext in
+
+            if let task = task {
+                let dbTask = DataManager.shared.first(
+                    entity: TaskDBModel.self,
+                    byId: task.id,
+                    context: backgroundContext
+                )
+                dbTask?.updateTask(title: title, note: note)
+
+            } else {
+                _ = TaskDBModel(title: title, note: note, context: backgroundContext)
+            }
+
+            do {
+                try backgroundContext.save()
+                onEdit()
+                
+                DispatchQueue.main.async {
+                    dismiss()
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    showErrorAlert = true
+                    errorDetail = error.localizedDescription
+                }
+            }
+        }
+    }
+
 }
 
 #Preview {
-//    let task = Task(id: 0, title: "Почитать книгу", note: "Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку! Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку!", isCompleted: false)
-
-//    TaskEditor(task: task, onSave: {_ in })
+    
 }

@@ -12,37 +12,42 @@ import CoreData
 @objc(TaskDBModel)
 public class TaskDBModel: NSManagedObject {
 
+    convenience init(from model: TaskAPIModel, context: NSManagedObjectContext) {
+        self.init(context: context)
+
+        self.id = UUID()
+        self.title = model.todo
+        self.createdAt = Date()
+        self.isCompleted = model.completed
+    }
+
+    convenience init(title: String, note: String, context: NSManagedObjectContext) {
+        self.init(context: context)
+
+        self.id = UUID()
+        self.title = title
+        self.note = note
+        self.createdAt = Date()
+        self.isCompleted = false
+    }
 }
 
 extension TaskDBModel {
+    var asUIModel: TaskUIModel { TaskUIModel(self) }
+}
 
-    static func createTask(
-        in context: NSManagedObjectContext,
-        title: String,
-        note: String
-    ) throws -> TaskDBModel {
-        let newTask = TaskDBModel(context: context)
-
-        newTask.id = UUID()
-        newTask.title = title
-        newTask.note = note
-        newTask.createdAt = Date()
-        newTask.isCompleted = false
-
-        try context.save()
-        return newTask
-    }
-
-    func updateTask(
-        in context: NSManagedObjectContext,
-        title: String,
-        note: String
-    ) throws  -> TaskDBModel {
-
+extension TaskDBModel {
+    
+    func updateTask(title: String, note: String) {
         self.title = title
         self.note = note
-
-        try context.save()
-        return self
     }
+
+    func checkTask() {
+        self.isCompleted.toggle()
+    }
+}
+
+extension TaskDBModel: NamedDBEntity {
+    public static var _entityName: String { "Task" }
 }

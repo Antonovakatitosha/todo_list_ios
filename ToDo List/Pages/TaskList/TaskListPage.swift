@@ -8,42 +8,52 @@
 import SwiftUI
 
 struct TaskListPage: View {
-    @FetchRequest(sortDescriptors: []) var tasks: FetchedResults<TaskDBModel>
 
-//    let tasks: [Task] = [
-//        Task(id: 0, title: "Почитать книгу", description: "Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку! Сходить в спортзал или сделать тренировку дома. Не забыть про разминку и растяжку!", isCompleted: true, createdAt: Date.now),
-//        Task(id: 1, title: "Уборка в квартире", isCompleted: false),
-//        Task(id: 2, title: "Работа над проектом", isCompleted: false),
-//        Task(id: 3, title: "Вечерний отдых", isCompleted: false),
-//        Task(id: 4, title: "Зарядка утром", isCompleted: false),
-//    ]
-
+    @State private var vm = TaskListViewModel()
     @State private var searchText = ""
+
+    @State private var showErrorAlert = false
+    @State private var errorDetail = ""
 
     var body: some View {
         NavigationStack {
             ZStack {
-                List(tasks) { task in
-                    TaskRow(task: task)
+                List(vm.tasks) { task in
+                    TaskRow(task: task, onEdit: vm.fetchTasks)
                         .listSectionSeparator(.hidden, edges: .top)
                         .listSectionSeparator(.hidden, edges: .bottom)
                 }
                 .listStyle(.inset)
 
-                BottomBar()
+                BottomBar(taskCount: vm.tasks.count, onEdit: vm.fetchTasks)
             }
             .navigationTitle("Задачи")
-            .searchable(text: $searchText, prompt: "Поиск") {
-
+            .searchable(text: $searchText, prompt: "Поиск")
+            .onChange(of: searchText) {
+                vm.searchText = $1
+                vm.fetchTasks()
             }
+        }
+        .onAppear(perform: onAppear)
+        .alert(isPresented: $showErrorAlert) {
+            Alert(
+                title: Text("Ошибка получения задач"),
+                message: Text(errorDetail)
+            )
         }
     }
 
-    var searchResults: [TaskDBModel] {
-        if searchText.isEmpty {
-            return Array(tasks)
+    func onAppear() {
+        if LaunchService.isFirstLaunch() {
+            TaskService.initialLoad (
+                onSuccess: {
+                    vm.fetchTasks()
+                }, onError: { error in
+                    showErrorAlert = true
+                    errorDetail = error.localizedDescription
+                })
         } else {
-            return tasks.filter { $0.title?.contains(searchText) ?? false }
+            vm.fetchTasks()
         }
     }
 }

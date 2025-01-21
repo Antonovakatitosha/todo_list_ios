@@ -8,11 +8,20 @@
 import SwiftUI
 
 struct FormatedDate: View {
+    let date: Date
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text(date.formatted(
+            .dateTime
+                .year()
+                .month(.twoDigits)
+                .day(.twoDigits)
+        ))
+        .font(.system(size: 12))
+        .foregroundStyle(.gray)
     }
 }
 
 #Preview {
-    FormatedDate()
+    FormatedDate(date: Date())
 }

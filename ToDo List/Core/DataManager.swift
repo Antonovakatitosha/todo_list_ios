@@ -13,7 +13,7 @@ class DataManager {
 
     static let shared = DataManager()
 
-// Так как по ТЗ мы все операции с бд проводем в фоноыом потоке, то от спользования главного контекста сознательно отказываемся
+// Так как по ТЗ мы все операции с бд проводем в фоновыом потоке, то от спользования главного контекста сознательно отказываемся
 //    lazy var viewContext: NSManagedObjectContext = {
 //        container.viewContext.automaticallyMergesChangesFromParent = true
 //        container.viewContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
@@ -41,18 +41,12 @@ class DataManager {
         }
     }
 
-//    2 - это добавляем в класс, который обслуживает кор дату
-    func first<T: NamedDBEntity>(
-        entity: T.Type,
-        byRemoteId remoteId: String?,
-        context: NSManagedObjectContext) -> T? {
-            guard let remoteId = remoteId else {
-                return nil
-            }
 
+    func first<T: NamedDBEntity>(entity: T.Type, byId id: UUID, context: NSManagedObjectContext) -> T? {
             let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: T._entityName)
-            fetchRequest.predicate = NSPredicate(format: "remoteId = %@", remoteId)
+            fetchRequest.predicate = NSPredicate(format: "id = %@", id as CVarArg)
             fetchRequest.fetchLimit = 1
+
             do {
                 return try context.fetch(fetchRequest).first as? T
             } catch {
@@ -62,17 +56,25 @@ class DataManager {
         }
 
 
+    func delete<T: NamedDBEntity>(entity: T.Type, byId id: UUID, context: NSManagedObjectContext) -> Bool {
+
+        if let object = first(entity: entity, byId: id, context: context) {
+            context.delete(object)
+            return true
+        } else {
+            print("Объект с id \(id) не найден.")
+            return false
+        }
+    }
+
+
+
     func list<T: NamedDBEntity>(
-        entity: T.Type,
-        predicate: NSPredicate? = nil,
-        sortDescriptors: [NSSortDescriptor]? = nil,
-        context: NSManagedObjectContext
-    ) -> [T] {
+        entity: T.Type, predicate: NSPredicate? = nil, context: NSManagedObjectContext) -> [T] {
         let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: T._entityName)
         if let predicate = predicate {
             fetchRequest.predicate = predicate
         }
-        fetchRequest.sortDescriptors = sortDescriptors
 
         return (try? context.fetch(fetchRequest) as? [T]) ?? []
     }
