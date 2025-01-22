@@ -82,7 +82,7 @@ struct TaskEditorPage: View {
                 if let task = task {
                     let dbTask = try DBManager.shared.first(
                         entity: TaskDBModel.self,
-                        byId: task.id,
+                        byID: task.id,
                         context: backgroundContext
                     )
                     dbTask?.updateTask(title: title, note: note)

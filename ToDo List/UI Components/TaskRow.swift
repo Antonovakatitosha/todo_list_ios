@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TaskRow: View {
-    
+
     let task: TaskUIModel
     var onEdit: () -> Void
 
@@ -78,7 +78,7 @@ struct TaskRow: View {
         DBManager.shared.performBackgroundTask { backgroundContext in
 
             do {
-                let isDeleted = try !DBManager.shared.delete(
+                let isDeleted = try DBManager.shared.delete(
                     entity: TaskDBModel.self,
                     byID: task.id,
                     context: backgroundContext
@@ -100,7 +100,7 @@ struct TaskRow: View {
             do {
                 let dbTask = try DBManager.shared.first(
                     entity: TaskDBModel.self,
-                    byId: task.id,
+                    byID: task.id,
                     context: backgroundContext
                 )
                 dbTask?.checkTask()

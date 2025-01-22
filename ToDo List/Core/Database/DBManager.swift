@@ -39,7 +39,7 @@ class DBManager {
     }
 
 
-    func first<T: NamedDBEntity>(entity: T.Type, byId id: UUID, context: NSManagedObjectContext) throws-> T? {
+    func first<T: NamedDBEntity>(entity: T.Type, byID id: UUID, context: NSManagedObjectContext) throws-> T? {
         let fetchRequest = NSFetchRequest<NSManagedObject>(entityName: T._entityName)
         fetchRequest.predicate = NSPredicate(format: "id = %@", id as CVarArg)
         fetchRequest.fetchLimit = 1
@@ -50,7 +50,7 @@ class DBManager {
 
     func delete<T: NamedDBEntity>(entity: T.Type, byID id: UUID, context: NSManagedObjectContext) throws -> Bool {
 
-        guard let object = try first(entity: entity, byId: id, context: context) else {
+        guard let object = try first(entity: entity, byID: id, context: context) else {
             return false
         }
 
