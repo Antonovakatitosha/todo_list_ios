@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct FormatedDate: View {
+    
     let date: Date
     
     var body: some View {

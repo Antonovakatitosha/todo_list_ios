@@ -8,6 +8,7 @@
 import Foundation
 
 struct TaskUIModel: Identifiable {
+    
     let id: UUID
     var title: String
     var note: String?

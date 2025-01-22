@@ -10,13 +10,12 @@ import SwiftUI
 struct TaskEditorPage: View {
     @Environment(\.dismiss) private var dismiss
 
-    @State private var title: String
-    @State private var note: String
-    @State private var createdAt: Date
-
     let task: TaskUIModel?
     var onEdit: () -> Void
 
+    @State private var title: String
+    @State private var note: String
+    @State private var createdAt: Date
     @State private var showErrorAlert = false
     @State private var errorDetail = ""
 
@@ -71,44 +70,53 @@ struct TaskEditorPage: View {
     }
 
     private func saveOrCreate() {
+
         guard !title.isEmpty else {
-            showErrorAlert = true
-            errorDetail = "Невозможно сохранить задачу без названия"
+            handleError(with: "Невозможно сохранить задачу без названия")
             return
         }
 
-        DataManager.shared.performBackgroundTask { backgroundContext in
-
-            if let task = task {
-                let dbTask = DataManager.shared.first(
-                    entity: TaskDBModel.self,
-                    byId: task.id,
-                    context: backgroundContext
-                )
-                dbTask?.updateTask(title: title, note: note)
-
-            } else {
-                _ = TaskDBModel(title: title, note: note, context: backgroundContext)
-            }
+        DBManager.shared.performBackgroundTask { backgroundContext in
 
             do {
+                if let task = task {
+                    let dbTask = try DBManager.shared.first(
+                        entity: TaskDBModel.self,
+                        byId: task.id,
+                        context: backgroundContext
+                    )
+                    dbTask?.updateTask(title: title, note: note)
+
+                } else {
+                    _ = TaskDBModel(title: title, note: note, context: backgroundContext)
+                }
+
                 try backgroundContext.save()
                 onEdit()
                 
                 DispatchQueue.main.async {
                     dismiss()
                 }
-            } catch {
-                DispatchQueue.main.async {
-                    showErrorAlert = true
-                    errorDetail = error.localizedDescription
-                }
-            }
+            } catch { handleError(with: error.localizedDescription) }
         }
     }
-
+    private func handleError(with errorDescription: String) {
+        DispatchQueue.main.async {
+            showErrorAlert = true
+            errorDetail = errorDescription
+        }
+    }
 }
 
 #Preview {
-    
+    TaskEditorPage(
+        task: .init(
+            .init(
+                title: "Test title",
+                note: "Some note",
+                context: DBManager.shared.viewContext
+            )
+        ),
+        onEdit: {}
+    )
 }

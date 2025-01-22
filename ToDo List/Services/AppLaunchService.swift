@@ -8,6 +8,7 @@
 import Foundation
 
 class LaunchService {
+    
     private static let firstLaunchKey = "isFirstLaunch"
 
     static func isFirstLaunch() -> Bool {

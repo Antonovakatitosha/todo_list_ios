@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct TaskRow: View {
+    
     let task: TaskUIModel
     var onEdit: () -> Void
 
@@ -74,50 +75,46 @@ struct TaskRow: View {
 
     private func deleteTask() {
 
-        DataManager.shared.performBackgroundTask { backgroundContext in
-            if !DataManager.shared.delete(
-                entity: TaskDBModel.self,
-                byId: task.id,
-                context: backgroundContext
-            ) {
-                DispatchQueue.main.async {
-                    showErrorAlert = true
-                    errorDetail = "Ошибка удаления задачи"
-                }
-            }
+        DBManager.shared.performBackgroundTask { backgroundContext in
 
             do {
+                let isDeleted = try !DBManager.shared.delete(
+                    entity: TaskDBModel.self,
+                    byID: task.id,
+                    context: backgroundContext
+                )
+                guard isDeleted else {
+                    handleError(with: "Ошибка удаления задачи")
+                    return
+                }
+
                 try backgroundContext.save()
                 onEdit()
-            } catch {
-                DispatchQueue.main.async {
-                    showErrorAlert = true
-                    errorDetail = error.localizedDescription
-                }
-            }
+            } catch { handleError(with: error.localizedDescription) }
         }
 
     }
 
     private func toggleTask() {
-        DataManager.shared.performBackgroundTask { backgroundContext in
-
-            let dbTask = DataManager.shared.first(
-                entity: TaskDBModel.self,
-                byId: task.id,
-                context: backgroundContext
-            )
-            dbTask?.checkTask()
-
+        DBManager.shared.performBackgroundTask { backgroundContext in
             do {
+                let dbTask = try DBManager.shared.first(
+                    entity: TaskDBModel.self,
+                    byId: task.id,
+                    context: backgroundContext
+                )
+                dbTask?.checkTask()
+
                 try backgroundContext.save()
                 onEdit()
-            } catch {
-                DispatchQueue.main.async {
-                    showErrorAlert = true
-                    errorDetail = error.localizedDescription
-                }
-            }
+            } catch { handleError(with: error.localizedDescription) }
+        }
+    }
+
+    private func handleError(with errorDescription: String) {
+        DispatchQueue.main.async {
+            showErrorAlert = true
+            errorDetail = errorDescription
         }
     }
 }
@@ -145,7 +142,7 @@ struct TaskPreview: View {
                     .lineLimit(2)
                     .truncationMode(.tail)
             }
-            
+
             FormatedDate(date: Date())
         }
         .frame(maxWidth: .infinity, alignment: .leading)

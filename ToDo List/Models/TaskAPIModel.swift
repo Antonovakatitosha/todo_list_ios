@@ -12,7 +12,3 @@ struct TaskAPIModel: Decodable {
     let todo: String
     let completed: Bool
 }
-
-struct TodosResponse: Decodable {
-    let todos: [TaskAPIModel]
-}

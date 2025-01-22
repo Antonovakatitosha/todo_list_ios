@@ -12,9 +12,6 @@ struct TaskListPage: View {
     @State private var vm = TaskListViewModel()
     @State private var searchText = ""
 
-    @State private var showErrorAlert = false
-    @State private var errorDetail = ""
-
     var body: some View {
         NavigationStack {
             ZStack {
@@ -24,6 +21,7 @@ struct TaskListPage: View {
                         .listSectionSeparator(.hidden, edges: .bottom)
                 }
                 .listStyle(.inset)
+                .padding(.bottom, 50)
 
                 BottomBar(taskCount: vm.tasks.count, onEdit: vm.fetchTasks)
             }
@@ -34,26 +32,12 @@ struct TaskListPage: View {
                 vm.fetchTasks()
             }
         }
-        .onAppear(perform: onAppear)
-        .alert(isPresented: $showErrorAlert) {
+        .onAppear(perform: vm.onAppear)
+        .alert(isPresented: $vm.showErrorAlert) {
             Alert(
                 title: Text("Ошибка получения задач"),
-                message: Text(errorDetail)
+                message: Text(vm.errorDetail)
             )
-        }
-    }
-
-    func onAppear() {
-        if LaunchService.isFirstLaunch() {
-            TaskService.initialLoad (
-                onSuccess: {
-                    vm.fetchTasks()
-                }, onError: { error in
-                    showErrorAlert = true
-                    errorDetail = error.localizedDescription
-                })
-        } else {
-            vm.fetchTasks()
         }
     }
 }

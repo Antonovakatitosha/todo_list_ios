@@ -16,7 +16,7 @@ class TaskService {
 
         NetworkManager.shared.get(
             urlString: tasksURLString,
-            responseType: TodosResponse.self
+            responseType: TodoListAPIResponse.self
         ) { result in
             switch result {
 
@@ -38,7 +38,7 @@ class TaskService {
         onError: @escaping (Error) -> Void
     ) {
 
-        DataManager.shared.performBackgroundTask { backgroundContext in
+        DBManager.shared.performBackgroundTask { backgroundContext in
             _ = tasks.map{ TaskDBModel(from: $0, context: backgroundContext) }
 
             do { try backgroundContext.save() }

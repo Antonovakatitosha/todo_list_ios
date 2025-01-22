@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct BottomBar: View {
+    
     let taskCount: Int
     var onEdit: () -> Void
 

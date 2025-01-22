@@ -8,6 +8,7 @@
 import CoreData
 
 public protocol NamedDBEntity: NSManagedObject {
+    
     static var _entityName: String { get }
 }
 

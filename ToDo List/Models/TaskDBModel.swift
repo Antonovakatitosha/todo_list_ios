@@ -33,11 +33,7 @@ public class TaskDBModel: NSManagedObject {
 }
 
 extension TaskDBModel {
-    var asUIModel: TaskUIModel { TaskUIModel(self) }
-}
 
-extension TaskDBModel {
-    
     func updateTask(title: String, note: String) {
         self.title = title
         self.note = note
@@ -48,6 +44,14 @@ extension TaskDBModel {
     }
 }
 
+// MARK: - Helpers
+extension TaskDBModel {
+
+    var asUIModel: TaskUIModel { TaskUIModel(self) }
+}
+
+// MARK: - NamedDBEntity
 extension TaskDBModel: NamedDBEntity {
+
     public static var _entityName: String { "Task" }
 }
